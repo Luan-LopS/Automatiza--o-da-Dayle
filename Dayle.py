@@ -4,20 +4,10 @@ import tkinter as tk
 from openpyxl import load_workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 import numpy as np
-import pyautogui
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from datetime import datetime
-
-# python
-#from mouseinfo import mouseInfo
-#mouseInfo()
-
-caminhoZabbix = r'C:\Users\luan.siqueira\Downloads\zbx_problems_export.csv' #caminho para o export do zabbix
-
-if os.path.exists(caminhoZabbix):#excluir o export do zabbix
-    os.remove(caminhoZabbix)
 
 def login():# Cria a janela principal
     global root
@@ -44,7 +34,6 @@ def tentarLogin(usuario,senha):
 
     global drives
     if login_zabbix(usuario, senha):
-        print("Login bem-sucedido!")
         root.destroy()  # Fecha a janela de login
         extrairCSv(usuario)
     else:
@@ -64,17 +53,20 @@ def login_zabbix(usuario, senha):
     driver = webdriver.Chrome(options=options)        # Inicializa o driver do Chrome
 
     # URL para login no Zabbix
-    url = "https://zabbix-client01.compwire.com.br/zabbix.php?show=3&name=&severities%5B2%5D=2&severities%5B3%5D=3&severities%5B4%5D=4&severities%5B5%5D=5&inventory%5B0%5D%5Bfield%5D=type&inventory%5B0%5D%5Bvalue%5D=&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&show_tags=3&tag_name_format=0&tag_priority=&show_opdata=0&show_timeline=1&filter_name=&filter_show_counter=0&filter_custom_time=0&sort=clock&sortorder=DESC&age_state=0&show_suppressed=0&unacknowledged=0&compact_view=0&details=0&highlight_row=0&action=problem.view&groupids%5B%5D=21&groupids%5B%5D=28&groupids%5B%5D=31&groupids%5B%5D=41&groupids%5B%5D=138&triggerids%5B%5D=248588"
+    url = ("https://zabbix-client01.compwire.com.br/zabbix.php?show=3&name=&severities%5B2%5D=2&severities%5B3%5D=3&severities%5B4%5D=4&severities%5B5%5D=5&inventory%5B0%5D%5"
+           "Bfield%5D=type&inventory%5B0%5D%5Bvalue%5D=&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&show_tags=3&tag_name_format=0&tag_"
+           "priority=&show_opdata=0&show_timeline=1&filter_name=&filter_show_counter=0&filter_custom_time=0&sort=clock&sortorder=DESC&age_state=0&show_suppressed=0&unacknowledg"
+           "ed=0&compact_view=0&details=0&highlight_row=0&action=problem.view&groupids%5B%5D=28&groupids%5B%5D=31&groupids%5B%5D=41&groupids%5B%5D=138&groupids%5B%5D=21")
 
     driver.get(url)
 
+    time.sleep(10)  # Espera um pouco para a página carregar
+
+    driver.find_element(By.ID, "login").click() # Clica no botão de login
+
     time.sleep(2)  # Espera um pouco para a página carregar
 
-    pyautogui.click(3117, 353, button='left', clicks=1)
-
-    time.sleep(2)  # Espera um pouco para a página carregar
-
-    usuario_field = driver.find_element(By.ID, "name")        # Preenche os campos de usuário e senha
+    usuario_field = driver.find_element(By.ID, "name")  # Preenche os campos de usuário e senha
     usuario_field.clear()  # Limpa o campo de usuário
     usuario_field.send_keys(usuario)  # Insere o usuário
 
@@ -84,45 +76,42 @@ def login_zabbix(usuario, senha):
 
     driver.find_element(By.ID, "enter").click()# Clica no botão de login
 
-    time.sleep(4)# Aguarde o login ser realizado (pode precisar de ajustes dependendo da página de login do Zabbix)
+    time.sleep(3)# Aguarde o login ser realizado (pode precisar de ajustes dependendo da página de login do Zabbix)
 
-    driver.find_element(By.ID, "enter").click()
-
-    time.sleep(4)# Aguarde o login ser realizado (pode precisar de ajustes dependendo da página de login do Zabbix)
-    
     try:
-        driver.find_element(By.ID, "enter")
-        return False
-
-
-    except Exception as e:
-        print('Erro', e)
+        driver.find_element(By.ID, "export_csv")
         return True
 
+    except Exception as e:
+        print('Erro durante o login:', e)
+        return False
 
 def extrairCSv(usuario):
     global driver
 
-    pyautogui.click(2707, 391, duration=2, button='left', clicks=1)    # remove o Triggers
+    caminhoZabbix = fr'C:\Users\{usuario}\Downloads\zbx_problems_export.csv'  # caminho para o export do zabbix
 
-    pyautogui.click(2575, 253, duration=2, button='left', clicks=1)    # aperta o problems
+    if os.path.exists(caminhoZabbix):  # excluir o export do zabbix
+        os.remove(caminhoZabbix)
 
-    pyautogui.click(2916, 617, duration=3, button='left', clicks=1)    # Applay
+    driver.find_element(By.NAME, "filter_apply").click()  # Applay
 
-    pyautogui.click(3719, 164, duration=4, button='left', clicks=1)    # export
+    time.sleep(2)
 
-    time.sleep(8)    # espera 8s
+    driver.find_element(By.ID, "export_csv").click() # export
 
-    excel(usuario)    # chama o excel
+    time.sleep(4)    # espera 4s
 
-    driver.quit() # sai do imput 
+    excel(usuario, caminhoZabbix)    # chama o excel
 
-def excel(usuario):
+    driver.quit()     # sai do imput
+
+def excel(usuario,caminhoZabbix):
     df = pd.read_csv(caminhoZabbix)    #alimenta o excel com o csv exportado pelo zabbix
 
     dataFormatada = datetime.now().strftime('%d-%m')     #formata a data em dia/mes para criar a pasta e arquivo excel
 
-    mesformatado = int(datetime.now().strftime('%m')) #formato mes como numero para interar sobre lista com messes 
+    mesformatado = int(datetime.now().strftime('%m'))   #formato mes como numero para interar sobre lista com messes
 
     meses=['Janeiro', 'Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro', 'Dezembro'] # lista de meses 
 
