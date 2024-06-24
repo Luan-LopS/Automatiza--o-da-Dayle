@@ -53,14 +53,10 @@ def login_zabbix(usuario, senha):
     driver = webdriver.Chrome(options=options)        # Inicializa o driver do Chrome
 
     # URL para login no Zabbix
-    url = ("https://zabbix-client01.compwire.com.br/zabbix.php?show=3&name=&severities%5B2%5D=2&severities%5B3%5D=3&severities%5B4%5D=4&severities%5B5%5D=5&inventory%5B0%5D%5"
-           "Bfield%5D=type&inventory%5B0%5D%5Bvalue%5D=&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&show_tags=3&tag_name_format=0&tag_"
-           "priority=&show_opdata=0&show_timeline=1&filter_name=&filter_show_counter=0&filter_custom_time=0&sort=clock&sortorder=DESC&age_state=0&show_suppressed=0&unacknowledg"
-           "ed=0&compact_view=0&details=0&highlight_row=0&action=problem.view&groupids%5B%5D=28&groupids%5B%5D=31&groupids%5B%5D=41&groupids%5B%5D=138&groupids%5B%5D=21")
-
+    url = ("https://zabbix-client01.compwire.com.br/zabbix.php?show=1&name=&severities%5B2%5D=2&severities%5B3%5D=3&severities%5B4%5D=4&severities%5B5%5D=5&inventory%5B0%5D%5Bfield%5D=type&inventory%5B0%5D%5Bvalue%5D=&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&show_tags=3&tag_name_format=0&tag_priority=&show_opdata=0&show_timeline=1&filter_name=Dayle&filter_show_counter=0&filter_custom_time=0&sort=clock&sortorder=DESC&age_state=0&show_suppressed=0&unacknowledged=0&compact_view=0&details=0&highlight_row=0&action=problem.view&groupids%5B%5D=21&groupids%5B%5D=28&groupids%5B%5D=31&groupids%5B%5D=41&groupids%5B%5D=138&groupids%5B%5D=236")
     driver.get(url)
 
-    time.sleep(10)  # Espera um pouco para a página carregar
+    time.sleep(5)  # Espera um pouco para a página carregar
 
     driver.find_element(By.ID, "login").click() # Clica no botão de login
 
@@ -76,7 +72,7 @@ def login_zabbix(usuario, senha):
 
     driver.find_element(By.ID, "enter").click()# Clica no botão de login
 
-    time.sleep(3)# Aguarde o login ser realizado (pode precisar de ajustes dependendo da página de login do Zabbix)
+    time.sleep(20)# Aguarde o login ser realizado (pode precisar de ajustes dependendo da página de login do Zabbix)
 
     try:
         driver.find_element(By.ID, "export_csv")
@@ -152,9 +148,9 @@ def excel(usuario,caminhoZabbix):
     df['Dias anteriores'] = df['Host'].apply(lambda x: 'Sera enviado um report diario diretamente para a SME (período da manha).' if 'sme' in str(x) else '')
 
     #cria o clientes filtrando pelo host
-    df['Clientes'] = df['Host'].apply(lambda x: 'SERPRO' if 'SERPRO' in str(x) else ('SME' if 'sme' in str(x) else('MPMS' if 'mpms' in str(x) else('MPMS' if 'MPMS' in str(x) else''))))
+    df['Clientes'] = df['Host'].apply(lambda x: 'SERPRO' if 'SERPRO' in str(x) else ('SME' if 'sme' in str(x) else('MPMS' if 'mpms' in str(x) else('MPMS' if 'MPMS' in str(x) else ('SANEPAR' if 'sanepar' in str(x) else'')))))
 
-    prioridade = {'SME':4,'MPMS':3,'SERPRO':2, '':1} # crio numero de prioridade
+    prioridade = {'SME':5,'SANEPAR':4, 'MPMS':3,'SERPRO':2, '':1} # crio numero de prioridade
     df['Prioridade'] = df['Clientes'].map(prioridade) # add prioridades
 
     df_sorted = df.sort_values(by='Prioridade', ascending=True) # ordena por prioridade
@@ -172,7 +168,6 @@ def excel(usuario,caminhoZabbix):
         tab.tableStyleInfo = style
         ws.add_table(tab)
         wb.save(caminhoArquivo)
-
         os.startfile(caminhoArquivo)
 
 login()
